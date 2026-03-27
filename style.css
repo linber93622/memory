@@ -1,0 +1,79 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: #222;
+    color: white; 
+}
+
+h1 {
+    color: #4CAF50
+}
+
+#game-board {
+    display: grid;
+    grid-template-columns: repeat(5, 100px);
+    gap: 20px;
+    justify-content: center;
+    margin-top: 100px;
+}
+
+.card {
+    width: 100px;
+    height: 100px;
+    background: pink;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.card.flipped {
+    background:pink;
+}
+
+.card.matched {
+    background: #4CAF50;
+    cursor: default;
+}
+
+#moves {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#player {
+    font-size: 24px;
+    color: yellow;
+}
+
+#popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+
+}
+
+#popup-content {
+    background: #333;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    border: 4px solid #4CAF50;
+
+}
+
+#winner-text {
+    font-size: 40px;
+    color: white;
+    margin: 0;
+    
+}

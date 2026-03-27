@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Memory Spiel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="timer" style="position: absolute; top: 10px; left: 10px; font-size: 24px; color: white;">00:00</div>
+
+    <h1>Memory</h1>
+    <p id="player">Spieler 1 ist dran</p>
+    <p>Punkte Spieler 1: <span id="score1">0</span></p>
+    <p>Punkte Spieler 2: <span id="score2">0</span></p>
+    <p id="moves">Züge: 0</p>
+    <p id="winner" style="display: none; color: yellow; font-size: 20px;"></p>
+    <div id="restart-container" style="display: none; margin-top: 10px;">
+        <button id="restart-btn" style="padding: 15px 30px; font-size: 20px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 10px;">Neues Spiel</button>
+    </div>
+
+    <div id="game-board"></div>
+
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js"></script>
+</body>
+</html>
