@@ -23,12 +23,25 @@
         <button class="player-btn" data-players="7">7 Spieler</button>
     </div>
 
+    <div id="name-input" style="display: none;">
+        <h2>Gib die Spielernamen ein:</h2>
+        <div id="name-fields"></div>
+        <button id="start-game-btn">Spiel starten</button>
+    </div>
+
     <div id="game-area" style="display: none;">
         <div id="player-info"></div>
         <p id="moves">Zuege: 0</p>
         <p id="winner"></p>
         <button id="restart-btn">Neues Spiel</button>
         <div id="game-board"></div>
+    </div>
+
+    <div id="highscore-area" style="display: none;">
+        <h2>Highscore</h2>
+        <ol id="highscore-list"></ol>
+        <button id="show-selection-btn">Zurueck zur Auswahl</button>
+        <button id="reset-highscore-btn">Highscore loeschen</button>
     </div>
 
     <script src="script.js"></script>

@@ -1,10 +1,11 @@
 const gameBoard = document.getElementById("game-board");
 const selection = document.getElementById("selection");
 const gameArea = document.getElementById("game-area");
+const highscoreArea = document.getElementById("highscore-area");
 
 let emojiSets = [
     ["🎉", "🍄", "🥗", "🍕", "🍔", "🍟", "🍩", "🙈", "🍝", "❤️", "🥬", "🍿", "🍰", "🍫", "🤡", "🍳", "🫐", "🥝", "🥑", "🍆"],
-    ["🦊", "🐸", "🐼", "🦁", "🐵", "🦋", "🐢", "🦄", "🐙", "🦁", "🐰", "🦉", "🐸", "🦈", "🦜", "🐶", "🐱", "🐭", "🐹", "🦔"],
+    ["🦊", "🐸", "🐼", "🦁", "🐵", "🦋", "🐢", "🦄", "🐙", "🐰", "🦉", "🦈", "🦜", "🐶", "🐱", "🐭", "🐹", "🦔", "🐻", "🦩"],
     ["⚽", "🏀", "🎾", "🏐", "🏓", "⚾", "🥊", "🎯", "🏹", "⛳", "🎿", "🏊", "🚴", "🏋️", "🤸", "⛷️", "🏂", "🏄", "🤺", "🥌"],
     ["🌟", "🌙", "🌈", "☀️", "🌺", "🌸", "🌻", "🌼", "🍀", "🌲", "🌳", "🌴", "🌵", "🎄", "🌾", "🌿", "☘️", "🍁", "🍃", "🍂"],
     ["🔴", "🔵", "🟢", "🟡", "🟠", "🟣", "⚫", "⚪", "🟤", "🔶", "🔷", "🔸", "🔹", "🔺", "🔻", "💎", "💠", "🔘", "🔳", "🔲"]
@@ -13,6 +14,8 @@ let emojiSets = [
 let cards = [];
 let flippedCards = [];
 let scores = [0, 0, 0, 0, 0, 0, 0];
+let playerMoves = [0, 0, 0, 0, 0, 0, 0];
+let playerNames = [];
 let currentPlayer = 0;
 let numberOfPlayers = 2;
 let moveCount = 0;
@@ -23,14 +26,72 @@ let gameStarted = false;
 document.querySelectorAll('.player-btn').forEach(function(button) {
     button.addEventListener('click', function() {
         const players = parseInt(this.getAttribute('data-players'));
-        startGame(players);
+        showNameInput(players);
     });
 });
 
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+document.getElementById('start-game-btn').addEventListener('click', function() {
+    const nameInputs = document.querySelectorAll('.name-input');
+    playerNames = [];
+    nameInputs.forEach(function(input) {
+        let name = input.value.trim();
+        if (name === "") {
+            name = "Spieler " + (playerNames.length + 1);
+        }
+        playerNames.push(name);
+    });
+    startGame();
+});
+
+document.getElementById('show-selection-btn').addEventListener('click', function() {
+    highscoreArea.style.display = 'none';
+    document.getElementById('name-input').style.display = 'none';
+    selection.style.display = 'block';
+});
+
+document.getElementById('reset-highscore-btn').addEventListener('click', function() {
+    if (confirm('Highscore wirklich loeschen?')) {
+        localStorage.removeItem('memoryHighscores');
+        displayHighscores();
+    }
+});
+
+function getHighscores() {
+    let highscores = localStorage.getItem('memoryHighscores');
+    if (highscores) {
+        return JSON.parse(highscores);
+    }
+    return [];
+}
+
+function saveHighscore(moves, time) {
+    let highscores = getHighscores();
+    highscores.push({ 
+        moves: moves, 
+        time: time,
+        players: playerNames.slice(0, numberOfPlayers)
+    });
+    highscores.sort(function(a, b) { return a.moves - b.moves; });
+    highscores = highscores.slice(0, 10);
+    localStorage.setItem('memoryHighscores', JSON.stringify(highscores));
+}
+
+function displayHighscores() {
+    let highscores = getHighscores();
+    let list = document.getElementById('highscore-list');
+    list.innerHTML = '';
+    
+    if (highscores.length === 0) {
+        list.innerHTML = '<li>Noch keine Highscores!</li>';
+        return;
+    }
+    
+    for (let i = 0; i < highscores.length; i++) {
+        let entry = highscores[i];
+        let li = document.createElement('li');
+        let playersStr = entry.players ? entry.players.join(', ') : '';
+        li.textContent = (i + 1) + '. Platz: ' + entry.moves + ' Zuege (' + entry.time + 's) - ' + playersStr;
+        list.appendChild(li);
     }
 }
 
@@ -67,18 +128,25 @@ function createGameBoard() {
 }
 
 function updatePlayerDisplay() {
-    let html = '<p id="player">Spieler ' + (currentPlayer + 1) + ' ist dran</p>';
+    let html = '<p id="player">' + playerNames[currentPlayer] + ' ist dran</p>';
+    html += '<div id="player-stats">';
     
     for (let i = 0; i < numberOfPlayers; i++) {
-        html += '<p>Punkte Spieler ' + (i + 1) + ': <span id="score' + i + '">' + scores[i] + '</span></p>';
+        let isCurrent = (i === currentPlayer) ? ' class="current-player"' : '';
+        html += '<div' + isCurrent + '>';
+        html += '<span class="player-name">' + playerNames[i] + '</span>';
+        html += '<span class="stat"><span id="score' + i + '">' + scores[i] + '</span> Paare</span>';
+        html += '<span class="stat"><span id="moves' + i + '">' + playerMoves[i] + '</span> Zuege</span>';
+        html += '</div>';
     }
+    html += '</div>';
     
     document.getElementById("player-info").innerHTML = html;
 }
 
-function startGame(players) {
-    numberOfPlayers = players;
+function startGame() {
     scores = [0, 0, 0, 0, 0, 0, 0];
+    playerMoves = [0, 0, 0, 0, 0, 0, 0];
     currentPlayer = 0;
     moveCount = 0;
     seconds = 0;
@@ -91,16 +159,45 @@ function startGame(players) {
     }
     
     document.getElementById("timer").textContent = "00:00";
-    document.getElementById("moves").textContent = "Zuege: 0";
+    document.getElementById("moves").textContent = "Gesamt Zuege: 0";
     document.getElementById("winner").style.display = "none";
     document.getElementById("winner").textContent = "";
     document.getElementById("restart-btn").style.display = "none";
     
     selection.style.display = "none";
+    document.getElementById("name-input").style.display = "none";
+    highscoreArea.style.display = "none";
     gameArea.style.display = "block";
     
     updatePlayerDisplay();
     createGameBoard();
+}
+
+function showNameInput(players) {
+    numberOfPlayers = players;
+    const nameFields = document.getElementById('name-fields');
+    nameFields.innerHTML = '';
+    
+    for (let i = 0; i < players; i++) {
+        let label = document.createElement('label');
+        label.textContent = 'Spieler ' + (i + 1) + ': ';
+        label.style.display = 'block';
+        label.style.marginTop = '10px';
+        
+        let input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'name-input';
+        input.placeholder = 'Name eingeben';
+        input.style.padding = '10px';
+        input.style.fontSize = '16px';
+        input.style.marginLeft = '10px';
+        
+        nameFields.appendChild(label);
+        nameFields.appendChild(input);
+    }
+    
+    selection.style.display = 'none';
+    document.getElementById('name-input').style.display = 'block';
 }
 
 function startTimer() {
@@ -139,7 +236,9 @@ function onCardClick(event) {
 
     if (flippedCards.length === 2) {
         moveCount++;
-        document.getElementById("moves").textContent = "Zuege: " + moveCount;
+        playerMoves[currentPlayer]++;
+        document.getElementById("moves").textContent = "Gesamt Zuege: " + moveCount;
+        document.getElementById("moves" + currentPlayer).textContent = playerMoves[currentPlayer];
         setTimeout(checkMatch, 500);
     }
 }
@@ -161,6 +260,7 @@ function checkMatch() {
         
         if (totalFound === 20) {
             stopTimer();
+            saveHighscore(moveCount, seconds);
             
             let maxScore = 0;
             for (let i = 0; i < numberOfPlayers; i++) {
@@ -172,13 +272,13 @@ function checkMatch() {
             let winners = [];
             for (let i = 0; i < numberOfPlayers; i++) {
                 if (scores[i] === maxScore) {
-                    winners.push(i + 1);
+                    winners.push(playerNames[i]);
                 }
             }
             
             let resultText = "";
             if (winners.length === 1) {
-                resultText = "Spieler " + winners[0] + " gewinnt!";
+                resultText = winners[0] + " gewinnt!";
             } else {
                 resultText = "Unentschieden zwischen: " + winners.join(", ");
             }
@@ -212,6 +312,7 @@ function checkMatch() {
 }
 
 document.getElementById("restart-btn").addEventListener("click", function() {
-    selection.style.display = "block";
+    displayHighscores();
     gameArea.style.display = "none";
+    highscoreArea.style.display = "block";
 });
