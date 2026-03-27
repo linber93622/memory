@@ -1,20 +1,47 @@
 const gameBoard = document.getElementById("game-board");
+const selection = document.getElementById("selection");
+const gameArea = document.getElementById("game-area");
 
-let cards = [
-    "🎉", "🎉", "🍄‍🟫", "🍄‍🟫", "🥗", "🥗", "🍕", "🍕", "🍔", "🍔",
-    "🍟", "🍟", "🍩", "🍩", "🙈", "🙈", "🍝", "🍝", "❤️", "❤️",
-    "🥬", "🥬", "🍿", "🍿", "🍰", "🍰", "🍫", "🍫", "🤡", "🤡",
-    "🍳", "🍳", "🫐", "🫐", "🥝", "🥝", "🥑", "🥑", "🍆", "🍆"
+let emojiSets = [
+    ["🎉", "🍄", "🥗", "🍕", "🍔", "🍟", "🍩", "🙈", "🍝", "❤️", "🥬", "🍿", "🍰", "🍫", "🤡", "🍳", "🫐", "🥝", "🥑", "🍆"],
+    ["🦊", "🐸", "🐼", "🦁", "🐵", "🦋", "🐢", "🦄", "🐙", "🦁", "🐰", "🦉", "🐸", "🦈", "🦜", "🐶", "🐱", "🐭", "🐹", "🦔"],
+    ["⚽", "🏀", "🎾", "🏐", "🏓", "⚾", "🥊", "🎯", "🏹", "⛳", "🎿", "🏊", "🚴", "🏋️", "🤸", "⛷️", "🏂", "🏄", "🤺", "🥌"],
+    ["🌟", "🌙", "🌈", "☀️", "🌺", "🌸", "🌻", "🌼", "🍀", "🌲", "🌳", "🌴", "🌵", "🎄", "🌾", "🌿", "☘️", "🍁", "🍃", "🍂"],
+    ["🔴", "🔵", "🟢", "🟡", "🟠", "🟣", "⚫", "⚪", "🟤", "🔶", "🔷", "🔸", "🔹", "🔺", "🔻", "💎", "💠", "🔘", "🔳", "🔲"]
 ];
 
+let cards = [];
 let flippedCards = [];
-let player1Score = 0;
-let player2Score = 0;
-let currentPlayer = 1;
+let scores = [0, 0, 0, 0, 0, 0, 0];
+let currentPlayer = 0;
+let numberOfPlayers = 2;
 let moveCount = 0;
 let timerInterval = null;
 let seconds = 0;
 let gameStarted = false;
+
+document.querySelectorAll('.player-btn').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const players = parseInt(this.getAttribute('data-players'));
+        startGame(players);
+    });
+});
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function createCardsForGame() {
+    let randomSet = emojiSets[Math.floor(Math.random() * emojiSets.length)];
+    cards = [];
+    for (let i = 0; i < 20; i++) {
+        cards.push(randomSet[i]);
+        cards.push(randomSet[i]);
+    }
+}
 
 function shuffleCards() {
     for (let i = cards.length - 1; i > 0; i--) {
@@ -25,6 +52,7 @@ function shuffleCards() {
 
 function createGameBoard() {
     gameBoard.innerHTML = "";
+    createCardsForGame();
     shuffleCards();
 
     cards.forEach((value, index) => {
@@ -36,6 +64,43 @@ function createGameBoard() {
         card.addEventListener("click", onCardClick);
         gameBoard.appendChild(card);
     });
+}
+
+function updatePlayerDisplay() {
+    let html = '<p id="player">Spieler ' + (currentPlayer + 1) + ' ist dran</p>';
+    
+    for (let i = 0; i < numberOfPlayers; i++) {
+        html += '<p>Punkte Spieler ' + (i + 1) + ': <span id="score' + i + '">' + scores[i] + '</span></p>';
+    }
+    
+    document.getElementById("player-info").innerHTML = html;
+}
+
+function startGame(players) {
+    numberOfPlayers = players;
+    scores = [0, 0, 0, 0, 0, 0, 0];
+    currentPlayer = 0;
+    moveCount = 0;
+    seconds = 0;
+    gameStarted = false;
+    flippedCards = [];
+    
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    
+    document.getElementById("timer").textContent = "00:00";
+    document.getElementById("moves").textContent = "Zuege: 0";
+    document.getElementById("winner").style.display = "none";
+    document.getElementById("winner").textContent = "";
+    document.getElementById("restart-btn").style.display = "none";
+    
+    selection.style.display = "none";
+    gameArea.style.display = "block";
+    
+    updatePlayerDisplay();
+    createGameBoard();
 }
 
 function startTimer() {
@@ -74,7 +139,7 @@ function onCardClick(event) {
 
     if (flippedCards.length === 2) {
         moveCount++;
-        document.getElementById("moves").textContent = "Züge: " + moveCount;
+        document.getElementById("moves").textContent = "Zuege: " + moveCount;
         setTimeout(checkMatch, 500);
     }
 }
@@ -86,29 +151,41 @@ function checkMatch() {
         card1.classList.add("matched");
         card2.classList.add("matched");
         
-        if (currentPlayer === 1) {
-            player1Score++;
-            document.getElementById("score1").textContent = player1Score;
-        } else {
-            player2Score++;
-            document.getElementById("score2").textContent = player2Score;
-        }
+        scores[currentPlayer]++;
+        document.getElementById("score" + currentPlayer).textContent = scores[currentPlayer];
 
-        if (player1Score + player2Score === 20) {
+        let totalFound = 0;
+        for (let i = 0; i < numberOfPlayers; i++) {
+            totalFound += scores[i];
+        }
+        
+        if (totalFound === 20) {
             stopTimer();
             
-            let resultText = ""; 
-            if (player1Score > player2Score) {
-                resultText = "Spieler 1 gewinnt!";
-            } else if (player2Score > player1Score) {
-                resultText = "Spieler 2 gewinnt!";
+            let maxScore = 0;
+            for (let i = 0; i < numberOfPlayers; i++) {
+                if (scores[i] > maxScore) {
+                    maxScore = scores[i];
+                }
+            }
+            
+            let winners = [];
+            for (let i = 0; i < numberOfPlayers; i++) {
+                if (scores[i] === maxScore) {
+                    winners.push(i + 1);
+                }
+            }
+            
+            let resultText = "";
+            if (winners.length === 1) {
+                resultText = "Spieler " + winners[0] + " gewinnt!";
             } else {
-                resultText = "Unentschieden!";
+                resultText = "Unentschieden zwischen: " + winners.join(", ");
             }
             
             document.getElementById("winner").textContent = resultText;
             document.getElementById("winner").style.display = "block";
-            document.getElementById("restart-container").style.display = "block";
+            document.getElementById("restart-btn").style.display = "inline-block";
             
             let jsConfetti = new JSConfetti();
             jsConfetti.addConfetti({
@@ -123,35 +200,18 @@ function checkMatch() {
         card1.textContent = "";
         card2.textContent = "";
         
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
-        document.getElementById("player").textContent = "Spieler " + currentPlayer + " ist dran";
+        currentPlayer++;
+        if (currentPlayer >= numberOfPlayers) {
+            currentPlayer = 0;
+        }
+        
+        updatePlayerDisplay();
     }
 
     flippedCards = [];
 }
 
 document.getElementById("restart-btn").addEventListener("click", function() {
-    player1Score = 0;
-    player2Score = 0;
-    currentPlayer = 1;
-    moveCount = 0;
-    flippedCards = [];
-    seconds = 0;
-    gameStarted = false;
-    stopTimer();
-    
-    document.getElementById("score1").textContent = "0";
-    document.getElementById("score2").textContent = "0";
-    document.getElementById("player").textContent = "Spieler 1 ist dran";
-    document.getElementById("moves").textContent = "Züge: 0";
-    document.getElementById("winner").style.display = "none";
-    document.getElementById("restart-container").style.display = "none";
-    document.getElementById("timer").textContent = "00:00";
-    
-    createGameBoard();
+    selection.style.display = "block";
+    gameArea.style.display = "none";
 });
-
-document.getElementById("winner").style.display = "none";
-document.getElementById("restart-container").style.display = "none";
-
-createGameBoard();
